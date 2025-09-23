@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# CMake build dirs
+build/
+build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/
+
+# Compiled objects
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+
+# IDE configs
+.vscode/
+.idea/
