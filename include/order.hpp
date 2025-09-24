@@ -1,13 +1,12 @@
 #pragma once
-#include <cstdint>
-#include <string>
-
-// Basic Order struct for LOB simulator
-enum class Side { Buy, Sell };
+#include "types.hpp"
 
 struct Order {
-    uint64_t id;
+    OrderId id;
     Side side;
-    int64_t price;  // in ticks
-    int64_t qty;    // quantity
+    OrdType type;
+    Price limit_price; // ignored for market orders
+    Qty qty;
+    TimePoint ts;
 };
+
