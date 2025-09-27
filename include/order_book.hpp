@@ -32,4 +32,6 @@ struct OrderBook {
   // o: name of parameter inside function
   void add_limit(const Order& o);
   void cancel(OrderId id);
+
+  bool self_check() const;
 };

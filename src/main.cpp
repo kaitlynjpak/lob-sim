@@ -1,6 +1,7 @@
 #include <iostream>
-#include <iomanip>
+#include <stdexcept>
 #include "order_book.hpp"
+#include "matching_engine.hpp"
 
 // Simple pretty-printers for quick sanity checks
 static void dump_side(const char* name,
@@ -35,6 +36,18 @@ static void dump_book(const OrderBook& ob) {
             << " best_ask=" << ob.best_ask()
             << " mid="      << ob.mid() << "\n";
   std::cout << "======================================\n";
+}
+
+static void dump_fills(const std::vector<Fill>& fills) {
+  for (const auto& f : fills) {
+    std::cout << "TRADE taker=" << f.taker_id
+              << " maker=" << f.maker_id
+              << " side="  << (f.taker_side == Side::Buy ? "B" : "S")
+              << " px="    << f.price
+              << " qty="   << f.qty
+              << " t="     << f.ts << "\n";
+  }
+  if (fills.empty()) std::cout << "(no trades)\n";
 }
 
 int main() {
@@ -95,6 +108,35 @@ if (!ob.self_check()) return 1;
 ob.add_limit(make_order(300, Side::Sell, 105, 2, 1.0));
 ob.cancel(300);
 if (ob.asks.count(105) != 0) { std::cerr << "level not erased\n"; return 1; }
+
+std::cout << "\n===== M2: Matching Engine Demo =====\n";
+MatchingEngine me(ob);
+
+  // Seed book with some resting orders
+  OrderId id1 = 1;
+  ob.add_limit({id1++, Side::Sell, OrdType::Limit, 101, 5, 0.1});
+  ob.add_limit({id1++, Side::Sell, OrdType::Limit, 102, 3, 0.2});
+  ob.add_limit({id1++, Side::Buy,  OrdType::Limit,  99, 4, 0.3});
+  ob.add_limit({id1++, Side::Buy,  OrdType::Limit, 100, 6, 0.4});
+
+  std::cout << "Initial book:\n";
+  dump_book(ob);
+
+  // Crossing BUY limit @ 102 for 8 units
+  std::vector<Fill> fills1;
+  me.submit_limit(Side::Buy, 102, 8, 1.0, fills1);
+
+  std::cout << "\nAfter BUY limit @102 x8:\n";
+  dump_fills(fills1);
+  dump_book(ob);
+
+  // Market SELL for 7 units
+  std::vector<Fill> fills2;
+  me.submit_market(Side::Sell, 7, 2.0, fills2);
+
+  std::cout << "\nAfter MARKET SELL x7:\n";
+  dump_fills(fills2);
+  dump_book(ob);
 
   return 0;
 }
